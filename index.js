@@ -245,3 +245,36 @@ exports.pipe = function(source, target) {
   });
 
 };
+
+/**
+ * Respond based on the accept header of this request.  Provide a JSON
+ * response when the client accepts JSON.  Provide an HTML response 
+ * when the client accepts HTML
+ *
+ * @example
+   util.respond(req, {
+    "json": function() {
+      // send a json response
+    },
+    "html": function() {
+      // send an html response
+    }
+    );
+ *
+ * @param {Object} response - object containing response functions
+ * @param {Function} done - Function executed when session is destroyed
+ */
+exports.respond = function(req, res, options) {
+  if (req.accepts('html')) {
+    var html = options['html'];
+    if (html) {
+      html(res);
+    }
+  }
+  else if (req.accepts('json')) {
+    var json = options['json'];
+    if (json) {
+      json(res);
+    }
+  }
+}
