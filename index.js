@@ -77,7 +77,7 @@ exports.authenticatedOnly = function(config) {
       var token = req.get(TOKEN_ATTRIBUTE_TOKEN) || req.get(TOKEN_ATTRIBUTE_LOWER_CASE) || req.get(TOKEN_ATTRIBUTE_CAMEL_CASE);
       if (token) {
         adapter.find('authenticationToken', token, function(err, user) {
-          if (err) {
+          if (err || !user) {
             var error = 'Unable to find matching user for token';
             res.jerror(error);
           }
