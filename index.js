@@ -53,7 +53,7 @@ exports.authenticatedOnly = function(config) {
   config = config || {};
   var route = (config.login && config.login.route) || '/login';
 
-  var db = that.getDatabase(this.config);
+  var db = that.getDatabase(config);
   var adapter = config.db.adapter || require(db.adapter)(config);
 
   return function(req, res, next) {
