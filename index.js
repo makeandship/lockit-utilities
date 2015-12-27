@@ -4,6 +4,10 @@ var url = require('url');
 var base32 = require('thirty-two');
 var totp = require('notp').totp;
 
+var TOKEN_ATTRIBUTE_TOKEN = 'token';
+var TOKEN_ATTRIBUTE_CAMEL_CASE = 'authenticationToken';
+var TOKEN_ATTRIBUTE_LOWER_CASE = 'authentication-token';
+
 /**
  * Prevent users who aren't logged-in from accessing routes.
  * Use `login.route` for redirection. Function also remembers the requested url
@@ -34,10 +38,62 @@ exports.restrict = function(config) {
   var route = (config.login && config.login.route) || '/login';
 
   return function(req, res, next) {
+    // session authentication
     if (req.session.loggedIn) {return next(); }
     if (config.rest) {return res.send(401); }
     res.redirect(route + '?redirect=' + req.originalUrl);
   };
+
+};
+
+exports.authenticatedOnly = function(config) {
+
+  var that = this;
+
+  config = config || {};
+  var route = (config.login && config.login.route) || '/login';
+
+  var db = that.getDatabase(this.config);
+  var adapter = config.db.adapter || require(db.adapter)(config);
+
+  return function(req, res, next) {
+
+    // fetch the user for authenticated sessions
+    if (req.session.loggedIn && req.session.email) {
+      var email = req.session.email;
+      adapter.find('email', email, function(err, user) {
+        if (err) {
+          res.redirect(route + '?redirect=' + req.originalUrl);
+        }
+        else {
+          req.user = user;
+          next();
+        }
+      });
+    }
+    else {
+
+      // fetch the user for json token requests
+      var token = req.get(TOKEN_ATTRIBUTE_TOKEN) || req.get(TOKEN_ATTRIBUTE_LOWER_CASE) || req.get(TOKEN_ATTRIBUTE_CAMEL_CASE);
+      if (token) {
+        adapter.find('authenticationToken', token, function(err, user) {
+          if (err) {
+            var error = 'Unable to find matching user for token';
+            res.jerror(error);
+          }
+          else {
+            req.user = user;
+            next();
+          }
+        });
+      }
+      else {
+        res.redirect(route + '?redirect=' + req.originalUrl);
+      }
+    }
+
+  };
+
 
 };
 
