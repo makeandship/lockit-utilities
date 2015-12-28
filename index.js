@@ -8,6 +8,8 @@ var TOKEN_ATTRIBUTE_TOKEN = 'token';
 var TOKEN_ATTRIBUTE_CAMEL_CASE = 'authenticationToken';
 var TOKEN_ATTRIBUTE_LOWER_CASE = 'authentication-token';
 
+var adapter = null;
+
 /**
  * Prevent users who aren't logged-in from accessing routes.
  * Use `login.route` for redirection. Function also remembers the requested url
@@ -48,13 +50,14 @@ exports.restrict = function(config) {
 
 exports.authenticatedOnly = function(config) {
 
-  var that = this;
-
   config = config || {};
   var route = (config.login && config.login.route) || '/login';
 
-  var db = that.getDatabase(config);
-  var adapter = config.db.adapter || require(db.adapter)(config);
+  var db = this.getDatabase(config);
+  
+  if (!adapter) {
+    adapter = config.db.adapter || require(db.adapter)(config);
+  }
 
   return function(req, res, next) {
 
