@@ -50,6 +50,8 @@ exports.restrict = function(config) {
 
 exports.authenticatedOnly = function(config) {
 
+  var that = this;
+
   config = config || {};
   var route = (config.login && config.login.route) || '/login';
 
@@ -77,7 +79,7 @@ exports.authenticatedOnly = function(config) {
     else {
 
       // fetch the user for json token requests
-      var token = req.get(TOKEN_ATTRIBUTE_TOKEN) || req.get(TOKEN_ATTRIBUTE_LOWER_CASE) || req.get(TOKEN_ATTRIBUTE_CAMEL_CASE);
+      var token = that.token(req);
       if (token) {
         adapter.find('authenticationToken', token, function(err, user) {
           if (err || !user) {
@@ -244,7 +246,11 @@ exports.verify = function(token, key, options) {
  */
 exports.destroy = function(req, done) {
 
-  if (req.sessionStore) {return req.session.regenerate(done); }
+  if (req.sessionStore) {
+    return req.session.regenerate(done); 
+  }
+
+
   req.session = null;
   done();
 
@@ -336,4 +342,12 @@ exports.respond = function(req, res, options) {
       json(res);
     }
   }
-}
+};
+
+exports.token = function(req) {
+  var token = req.get(TOKEN_ATTRIBUTE_TOKEN) || 
+    req.get(TOKEN_ATTRIBUTE_LOWER_CASE) || 
+    req.get(TOKEN_ATTRIBUTE_CAMEL_CASE);
+
+  return token;
+};
