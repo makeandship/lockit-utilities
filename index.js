@@ -72,6 +72,7 @@ exports.authenticatedOnly = function(config) {
         }
         else {
           req.user = user;
+          res.user = user;
           next();
         }
       });
@@ -88,6 +89,7 @@ exports.authenticatedOnly = function(config) {
           }
           else {
             req.user = user;
+            res.user = user;
             next();
           }
         });
