@@ -62,7 +62,6 @@ exports.authenticatedOnly = function(config) {
   }
 
   return function(req, res, next) {
-
     // fetch the user for authenticated sessions
     if (req.session.loggedIn && req.session.email) {
       var email = req.session.email;
@@ -77,14 +76,20 @@ exports.authenticatedOnly = function(config) {
       });
     }
     else {
-
       // fetch the user for json token requests
       var token = that.token(req);
       if (token) {
         adapter.find('authenticationToken', token, function(err, user) {
           if (err || !user) {
-            var error = 'Unable to find matching user for token';
-            res.jerror(error);
+            var error = err || 'Unable to find matching user for token';
+            res.format({
+              json: function() {
+                res.status(403).jerror(new Error(error));
+              },
+              html: function() {
+                res.redirect(route + '?redirect=' + req.originalUrl + '&message=' + error);
+              }
+            }); 
           }
           else {
             req.user = user;
@@ -93,7 +98,15 @@ exports.authenticatedOnly = function(config) {
         });
       }
       else {
-        res.redirect(route + '?redirect=' + req.originalUrl);
+        var error = 'No authentication token found in header';
+        res.format({
+          json: function() {
+            res.status(403).jerror(new Error(error));
+          },
+          html: function() {
+            res.redirect(route + '?redirect=' + req.originalUrl + '&message=' + error);
+          } 
+        });
       }
     }
 
